@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 env:
-  OCI_CLI_AUTH: api_key   # FIX: must be lowercase "api_key" not "API_KEY"
+  OCI_CLI_AUTH: api_key
 
 jobs:
   build:
@@ -33,12 +33,12 @@ jobs:
           region=${{ secrets.OCI_REGION }}
           key_file=$HOME/.oci/oci_api_key.pem
           EOF
-          # FIX: Use $HOME not ~ in key_file path — tilde is not expanded in OCI config
           echo "${{ secrets.OCI_API_PRIVATE_KEY }}" > ~/.oci/oci_api_key.pem
           chmod 600 ~/.oci/oci_api_key.pem
           chmod 600 ~/.oci/config
 
       - name: Packer Init
+        # FIX: Use '.' so packer reads ALL .pkr.hcl files in the directory
         run: packer init .
 
       - name: Packer Validate
@@ -49,10 +49,10 @@ jobs:
             -var "compartment_ocid=${{ secrets.OCI_COMPARTMENT_OCID }}" \
             -var "subnet_ocid=${{ secrets.OCI_SUBNET_OCID }}" \
             -var "region=${{ secrets.OCI_REGION }}" \
-            oci-image.pkr.hcl
+            .
+            # ↑ FIX: '.' instead of 'oci-image.pkr.hcl' — loads variables.pkr.hcl too
 
       - name: Packer Build
-        # FIX: Added -var-file + separated validate from build + all required vars passed
         run: |
           packer build \
             -var-file="your_vars.pkrvars.hcl" \
@@ -62,4 +62,28 @@ jobs:
             -var "region=${{ secrets.OCI_REGION }}" \
             -on-error=cleanup \
             -color=false \
-            oci-image.pkr.hcl
+            .
+            # ↑ FIX: '.' instead of 'oci-image.pkr.hcl'
+```
+
+---
+
+## Required Repository Structure
+
+Make sure your repo looks exactly like this — all files in the **same directory**:
+```
+repo-root/
+├── oci-image.pkr.hcl          ← source + build blocks
+├── variables.pkr.hcl          ← all variable declarations
+├── your_vars.pkrvars.hcl      ← rename from your_vars_pkrvars.hcl
+└── setup.sh                   ← provisioner script
+```
+
+> If your files are in a subdirectory (e.g. `packer/`), add a `working-directory: packer/` to each step in the workflow, or `cd packer/` before each packer command.
+
+---
+
+## Variable Precedence (why `-var` overrides `-var-file` safely)
+```
+your_vars.pkrvars.hcl          ← loaded first (lower priority)
+-var "region=..."              ← CLI flag overrides the file (higher priority)
