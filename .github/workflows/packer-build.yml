@@ -1,45 +1,54 @@
-name: Packer OCI Image Build
+packer {
+  required_plugins {
+    oracle = {
+      source  = "github.com/hashicorp/oracle"
+      version = "~> 1.1.2"
+    }
+  }
+}
 
-on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
+source "oracle-oci" "ubuntu" {
+  availability_domain = var.availability_domain
+  compartment_ocid    = var.compartment_ocid
+  subnet_ocid         = var.subnet_ocid
+  region              = var.region
 
-env:
-  OCI_CLI_AUTH: API_KEY
+  # FIX 1: Removed GPU filter — use standard Ubuntu 22.04 base image
+  base_image_filter = {
+    operating_system         = "Canonical Ubuntu"
+    operating_system_version = "22.04"
+    # No display_name_search = matches latest standard Ubuntu 22.04
+  }
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+  # FIX 2: Add shape_config — required for all Flex shapes
+  shape = var.instance_shape
+  shape_config {
+    ocpus         = 1
+    memory_in_gbs = 8
+  }
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+  image_name    = "${var.image_name_prefix}-${formatdate("YYYYMMDDhhmmss", timestamp())}"
+  instance_name = "packer-build-instance-${formatdate("YYYYMMDDhhmmss", timestamp())}"
+  ssh_username  = "ubuntu"
 
-      - name: Setup Packer
-        uses: hashicorp/setup-packer@main
-        with:
-          version: 'latest'
+  # Recommended: assign public IP so Packer can SSH in
+  # If using private subnet + bastion, set this to false and add bastion config
+  create_vnic_details {
+    assign_public_ip = true
+  }
+}
 
-      - name: Configure OCI CLI
-        run: |
-          mkdir -p ~/.oci
-          echo "[DEFAULT]" > ~/.oci/config
-          echo "user=${{ secrets.OCI_USER_OCID }}" >> ~/.oci/config
-          echo "fingerprint=${{ secrets.OCI_FINGERPRINT }}" >> ~/.oci/config
-          echo "tenancy=${{ secrets.OCI_TENANCY_OCID }}" >> ~/.oci/config
-          echo "region=${{ secrets.OCI_REGION }}" >> ~/.oci/config
-          echo "key_file=~/.oci/oci_api_key.pem" >> ~/.oci/config
-          echo "${{ secrets.OCI_API_PRIVATE_KEY }}" > ~/.oci/oci_api_key.pem
-          chmod 600 ~/.oci/oci_api_key.pem
+build {
+  name    = "oci-ubuntu-image"
+  sources = ["source.oracle-oci.ubuntu"]
 
-      - name: Run Packer Build
-        id: packer_build
-        run: |
-          packer init .
-          packer build -var "availability_domain=${{ secrets.OCI_AVAILABILITY_DOMAIN }}" \
-                       -var "compartment_ocid=${{ secrets.OCI_COMPARTMENT_OCID }}" \
-                       -var "subnet_ocid=${{ secrets.OCI_SUBNET_OCID }}" \
-                       -var "region=${{ secrets.OCI_REGION }}" \
-                       oci-image.pkr.hcl
+  # Wait for cloud-init before running scripts
+  provisioner "shell" {
+    inline = ["sudo cloud-init status --wait"]
+  }
+
+  # FIX 3: Correct script path — matches where setup.sh actually lives
+  provisioner "shell" {
+    script = "./setup.sh"
+  }
+}
