@@ -1,0 +1,45 @@
+name: Packer OCI Image Build
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  OCI_CLI_AUTH: API_KEY
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Packer
+        uses: hashicorp/setup-packer@main
+        with:
+          version: 'latest'
+
+      - name: Configure OCI CLI
+        run: |
+          mkdir -p ~/.oci
+          echo "[DEFAULT]" > ~/.oci/config
+          echo "user=${{ secrets.OCI_USER_OCID }}" >> ~/.oci/config
+          echo "fingerprint=${{ secrets.OCI_FINGERPRINT }}" >> ~/.oci/config
+          echo "tenancy=${{ secrets.OCI_TENANCY_OCID }}" >> ~/.oci/config
+          echo "region=${{ secrets.OCI_REGION }}" >> ~/.oci/config
+          echo "key_file=~/.oci/oci_api_key.pem" >> ~/.oci/config
+          echo "${{ secrets.OCI_API_PRIVATE_KEY }}" > ~/.oci/oci_api_key.pem
+          chmod 600 ~/.oci/oci_api_key.pem
+
+      - name: Run Packer Build
+        id: packer_build
+        run: |
+          packer init .
+          packer build -var "availability_domain=${{ secrets.OCI_AVAILABILITY_DOMAIN }}" \
+                       -var "compartment_ocid=${{ secrets.OCI_COMPARTMENT_OCID }}" \
+                       -var "subnet_ocid=${{ secrets.OCI_SUBNET_OCID }}" \
+                       -var "region=${{ secrets.OCI_REGION }}" \
+                       oci-image.pkr.hcl
