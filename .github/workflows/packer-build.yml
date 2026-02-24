@@ -23,17 +23,43 @@ jobs:
           version: 'latest'
 
       - name: Configure OCI CLI
+        env:
+          OCI_API_PRIVATE_KEY: ${{ secrets.OCI_API_PRIVATE_KEY }}
         run: |
           mkdir -p ~/.oci
+
           echo "[DEFAULT]" > ~/.oci/config
           echo "user=${{ secrets.OCI_USER_OCID }}" >> ~/.oci/config
           echo "fingerprint=${{ secrets.OCI_FINGERPRINT }}" >> ~/.oci/config
           echo "tenancy=${{ secrets.OCI_TENANCY_OCID }}" >> ~/.oci/config
           echo "region=${{ secrets.OCI_REGION }}" >> ~/.oci/config
           echo "key_file=/home/runner/.oci/oci_api_key.pem" >> ~/.oci/config
-          echo "${{ secrets.OCI_API_PRIVATE_KEY }}" > ~/.oci/oci_api_key.pem
+
+          printf '%s\n' "$OCI_API_PRIVATE_KEY" > ~/.oci/oci_api_key.pem
+
           chmod 600 ~/.oci/oci_api_key.pem
           chmod 600 ~/.oci/config
+
+      - name: Debug OCI Config
+        run: |
+          echo "==> whoami / HOME"
+          whoami
+          echo $HOME
+
+          echo "==> OCI config:"
+          cat ~/.oci/config
+
+          echo "==> Key file permissions:"
+          ls -la ~/.oci/oci_api_key.pem
+
+          echo "==> Key file header:"
+          head -1 ~/.oci/oci_api_key.pem
+
+          echo "==> Key file footer:"
+          tail -1 ~/.oci/oci_api_key.pem
+
+          echo "==> Line count in key file:"
+          wc -l < ~/.oci/oci_api_key.pem
 
       - name: Packer Init
         run: packer init .
