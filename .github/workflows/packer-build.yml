@@ -38,7 +38,6 @@ jobs:
           chmod 600 ~/.oci/config
 
       - name: Packer Init
-        # FIX: Use '.' so packer reads ALL .pkr.hcl files in the directory
         run: packer init .
 
       - name: Packer Validate
@@ -50,7 +49,6 @@ jobs:
             -var "subnet_ocid=${{ secrets.OCI_SUBNET_OCID }}" \
             -var "region=${{ secrets.OCI_REGION }}" \
             .
-            # ↑ FIX: '.' instead of 'oci-image.pkr.hcl' — loads variables.pkr.hcl too
 
       - name: Packer Build
         run: |
@@ -63,27 +61,3 @@ jobs:
             -on-error=cleanup \
             -color=false \
             .
-            # ↑ FIX: '.' instead of 'oci-image.pkr.hcl'
-```
-
----
-
-## Required Repository Structure
-
-Make sure your repo looks exactly like this — all files in the **same directory**:
-```
-repo-root/
-├── oci-image.pkr.hcl          ← source + build blocks
-├── variables.pkr.hcl          ← all variable declarations
-├── your_vars.pkrvars.hcl      ← rename from your_vars_pkrvars.hcl
-└── setup.sh                   ← provisioner script
-```
-
-> If your files are in a subdirectory (e.g. `packer/`), add a `working-directory: packer/` to each step in the workflow, or `cd packer/` before each packer command.
-
----
-
-## Variable Precedence (why `-var` overrides `-var-file` safely)
-```
-your_vars.pkrvars.hcl          ← loaded first (lower priority)
--var "region=..."              ← CLI flag overrides the file (higher priority)
