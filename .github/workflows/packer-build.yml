@@ -33,6 +33,7 @@ jobs:
           echo "fingerprint=${{ secrets.OCI_FINGERPRINT }}" >> ~/.oci/config
           echo "tenancy=${{ secrets.OCI_TENANCY_OCID }}" >> ~/.oci/config
           echo "region=${{ secrets.OCI_REGION }}" >> ~/.oci/config
+          echo "${{ secrets.OCI_API_PRIVATE_KEY }}" > ~/.oci/oci_api_key.pem
           echo "key_file=/home/runner/.oci/oci_api_key.pem" >> ~/.oci/config
 
           printf '%s\n' "$OCI_API_PRIVATE_KEY" > ~/.oci/oci_api_key.pem
