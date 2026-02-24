@@ -14,7 +14,7 @@ source "oracle-oci" "ubuntu" {
   region              = var.region
 
   # FIX 1: Removed GPU filter — use standard Ubuntu 22.04 base image
-  base_image_filter = {
+  base_image_filter  {
     operating_system         = "Canonical Ubuntu"
     operating_system_version = "22.04"
     # No display_name_search = matches latest standard Ubuntu 22.04
