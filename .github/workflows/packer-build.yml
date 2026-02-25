@@ -52,7 +52,8 @@ jobs:
          echo "==> Key footer : $(tail -1 ~/.oci/oci_api_key.pem)"
          echo "==> Key lines  : $(wc -l < ~/.oci/oci_api_key.pem)"
          echo "==> Key bytes  : $(wc -c < ~/.oci/oci_api_key.pem)"
-         openssl rsa -in ~/.oci/oci_api_key.pem -check -noout 2>&1 | head -1 .
+         openssl rsa -in ~/.oci/oci_api_key.pem -check -noout 2>&1 | head -1 
+         .
 
       - name: Packer Validate
         run: |
