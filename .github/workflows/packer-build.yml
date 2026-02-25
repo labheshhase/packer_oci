@@ -73,7 +73,6 @@ jobs:
             -var "availability_domain=${{ secrets.OCI_AVAILABILITY_DOMAIN }}" \
             -var "tenancy_ocid=${{ secrets.OCI_TENANCY_OCID }}" \
             -var "key_file=/home/runner/.oci/oci_api_key.pem" \
-            -var "ocpus=${{ secrets.OCI_OCPUS }}" \
             -var "user_ocid=${{ secrets.OCI_USER_OCID }}" \
             -var "fingerprint=${{ secrets.OCI_FINGERPRINT }}" \
             -var "compartment_ocid=${{ secrets.OCI_COMPARTMENT_OCID }}" \
