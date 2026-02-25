@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 env:
-  OCI_API_PRIVATE_KEY: ${{ secrets.OCI_API_PRIVATE_KEY }}
+  OCI_CLI_AUTH: api_key
 
 jobs:
   build:
