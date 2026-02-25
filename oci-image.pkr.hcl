@@ -8,6 +8,12 @@ packer {
 }
 
 source "oracle-oci" "ubuntu" {
+  # Auth — must be explicit so Packer does not fall back to ~/.oci/config
+  tenancy_ocid = var.tenancy_ocid
+  user_ocid    = var.user_ocid
+  fingerprint  = var.fingerprint
+  key_file     = var.key_file
+
   availability_domain = var.availability_domain
   compartment_ocid    = var.compartment_ocid
   subnet_ocid         = var.subnet_ocid
