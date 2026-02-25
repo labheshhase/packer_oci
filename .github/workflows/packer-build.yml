@@ -31,17 +31,13 @@ jobs:
       - name: Configure OCI CLI
         run: |
           mkdir -p ~/.oci
-          echo "$user"
-          echo "$OCI_CLI_KEY_CONTENT"
-          echo $user
-          echo $OCI_CLI_KEY_CONTENT
           echo "[DEFAULT]" > ~/.oci/config
           echo "user=${{ secrets.OCI_USER_OCID }}" >> ~/.oci/config
           echo "fingerprint=${{ secrets.OCI_FINGERPRINT }}" >> ~/.oci/config
           echo "tenancy=${{ secrets.OCI_TENANCY_OCID }}" >> ~/.oci/config
           echo "region=${{ secrets.OCI_REGION }}" >> ~/.oci/config
           echo "key_file=/home/runner/.oci/oci_api_key.pem" >> ~/.oci/config
-          echo "${{ secrets.OCI_API_PRIVATE_KEY }}" > ~/.oci/oci_api_key.pem
+          printf "%s\n" "$OCI_CLI_KEY_CONTENT" > ~/.oci/oci_api_key.pem
           chmod 600 ~/.oci/oci_api_key.pem
           chmod 600 ~/.oci/config
 
@@ -57,7 +53,7 @@ jobs:
             -var "compartment_ocid=${{ secrets.OCI_COMPARTMENT_OCID }}" \
             -var "user_ocid=${{ secrets.OCI_USER_OCID }}" \
             -var "fingerprint=${{ secrets.OCI_FINGERPRINT }}" \
-            -var "key_file=${{ github.workspace }}/.oci/oci_api_key.pem" \
+            -var "key_file=/home/runner/.oci/oci_api_key.pem" \
             -var "subnet_ocid=${{ secrets.OCI_SUBNET_OCID }}" \
             -var "region=${{ secrets.OCI_REGION }}" \
             .
@@ -67,7 +63,8 @@ jobs:
           packer build \
             -var-file="your_vars.pkrvars.hcl" \
             -var "availability_domain=${{ secrets.OCI_AVAILABILITY_DOMAIN }}" \
-            -var "key_file=${{ github.workspace }}/.oci/oci_api_key.pem" \
+            -var "tenancy_ocid=${{ secrets.OCI_TENANCY_OCID }}" \
+            -var "key_file=/home/runner/.oci/oci_api_key.pem" \
             -var "ocpus=${{ secrets.OCI_OCPUS }}" \
             -var "user_ocid=${{ secrets.OCI_USER_OCID }}" \
             -var "fingerprint=${{ secrets.OCI_FINGERPRINT }}" \
