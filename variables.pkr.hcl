@@ -29,3 +29,7 @@ variable "region" {
   type        = string
   description = "The OCI region where the image will be built."
 }
+variable "key_file" {
+  type        = string
+  description = "The OCI region where the image will be built."
+}
