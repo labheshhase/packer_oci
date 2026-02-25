@@ -46,7 +46,7 @@ jobs:
       - name: Write OCI private key
         run: |
          mkdir -p ~/.oci
-         printf '%s' "$OCI_API_PRIVATE_KEY" > ~/.oci/oci_api_key.pem
+         printf '%s' "$OCI_CLI_KEY_CONTENT" > ~/.oci/oci_api_key.pem
          chmod 600 ~/.oci/oci_api_key.pem
          echo "==> Key header : $(head -1 ~/.oci/oci_api_key.pem)"
          echo "==> Key footer : $(tail -1 ~/.oci/oci_api_key.pem)"
