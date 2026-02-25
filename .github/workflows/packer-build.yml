@@ -12,7 +12,13 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    env:
+      user: ${{ secrets.OCI_USER_OCID }}
+      OCI_CLI_TENANCY: ${{ secrets.OCI_TENANCY_OCID }}
+      OCI_CLI_FINGERPRINT: ${{ secrets.OCI_FINGERPRINT }}
+      OCI_CLI_KEY_CONTENT: ${{ secrets.OCI_API_PRIVATE_KEY }}
+      OCI_CLI_REGION: ${{ secrets.OCI_REGION }}
+      
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -23,43 +29,21 @@ jobs:
           version: 'latest'
 
       - name: Configure OCI CLI
-        env:
-          OCI_API_PRIVATE_KEY: ${{ secrets.OCI_API_PRIVATE_KEY }}
         run: |
           mkdir -p ~/.oci
-
+          echo "$user"
+          echo "$OCI_CLI_KEY_CONTENT"
+          echo $user
+          echo $OCI_CLI_KEY_CONTENT
           echo "[DEFAULT]" > ~/.oci/config
           echo "user=${{ secrets.OCI_USER_OCID }}" >> ~/.oci/config
           echo "fingerprint=${{ secrets.OCI_FINGERPRINT }}" >> ~/.oci/config
           echo "tenancy=${{ secrets.OCI_TENANCY_OCID }}" >> ~/.oci/config
           echo "region=${{ secrets.OCI_REGION }}" >> ~/.oci/config
-          echo "${{ secrets.OCI_API_PRIVATE_KEY }}" > ~/.oci/oci_api_key.pem
           echo "key_file=/home/runner/.oci/oci_api_key.pem" >> ~/.oci/config
-
-          printf '%s\n' "$OCI_API_PRIVATE_KEY" > ~/.oci/oci_api_key.pem
+          echo "${{ secrets.OCI_API_PRIVATE_KEY }}" > ~/.oci/oci_api_key.pem
           chmod 600 ~/.oci/oci_api_key.pem
           chmod 600 ~/.oci/config
-          cat ~/.oci/config
-      - name: Debug OCI Config
-        run: |
-          echo "==> whoami / HOME"
-          whoami
-          echo $HOME
-
-          echo "==> OCI config:"
-          cat ~/.oci/config
-
-          echo "==> Key file permissions:"
-          ls -la ~/.oci/oci_api_key.pem
-
-          echo "==> Key file header:"
-          head -1 ~/.oci/oci_api_key.pem
-
-          echo "==> Key file footer:"
-          tail -1 ~/.oci/oci_api_key.pem
-
-          echo "==> Line count in key file:"
-          wc -l < ~/.oci/oci_api_key.pem
 
       - name: Packer Init
         run: packer init .
@@ -69,7 +53,11 @@ jobs:
           packer validate \
             -var-file="your_vars.pkrvars.hcl" \
             -var "availability_domain=${{ secrets.OCI_AVAILABILITY_DOMAIN }}" \
+            -var "tenancy_ocid=${{ secrets.OCI_TENANCY_OCID }}" \
             -var "compartment_ocid=${{ secrets.OCI_COMPARTMENT_OCID }}" \
+            -var "user_ocid=${{ secrets.OCI_USER_OCID }}" \
+            -var "fingerprint=${{ secrets.OCI_FINGERPRINT }}" \
+            -var "key_file=${{ github.workspace }}/.oci/oci_api_key.pem" \
             -var "subnet_ocid=${{ secrets.OCI_SUBNET_OCID }}" \
             -var "region=${{ secrets.OCI_REGION }}" \
             .
@@ -79,6 +67,10 @@ jobs:
           packer build \
             -var-file="your_vars.pkrvars.hcl" \
             -var "availability_domain=${{ secrets.OCI_AVAILABILITY_DOMAIN }}" \
+            -var "key_file=${{ github.workspace }}/.oci/oci_api_key.pem" \
+            -var "ocpus=${{ secrets.OCI_OCPUS }}" \
+            -var "user_ocid=${{ secrets.OCI_USER_OCID }}" \
+            -var "fingerprint=${{ secrets.OCI_FINGERPRINT }}" \
             -var "compartment_ocid=${{ secrets.OCI_COMPARTMENT_OCID }}" \
             -var "subnet_ocid=${{ secrets.OCI_SUBNET_OCID }}" \
             -var "region=${{ secrets.OCI_REGION }}" \
