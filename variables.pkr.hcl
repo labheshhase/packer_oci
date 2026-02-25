@@ -51,8 +51,3 @@ variable "image_name_prefix" {
   description = "Prefix for the output custom image name"
   default     = "ubuntu-base-image"
 }
-variable "ocpus" {
-  type        = integer
-  description = "Prefix for the output custom image name"
-  default     = "1"
-}
